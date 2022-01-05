@@ -1,0 +1,52 @@
+import React from "react";
+import { Table, Button } from "semantic-ui-react";
+import web3 from "../ethereum/web3";
+import Campaign from "../ethereum/campaign";
+
+const RequestRow = ({ request, address, id, approversCount }) => {
+  const { approvalCount, complete, description, recipient, value } = request;
+  const readyToFinalize = request.approvalCount > approversCount / 2;
+  const { Row, Cell } = Table;
+  const campaign = Campaign(address);
+
+  const onApprove = async () => {
+    const accounts = await web3.eth.getAccounts();
+    await campaign.methods.approveRequest(id).send({ from: accounts[0] });
+  };
+
+  const onFinalize = async () => {
+    const accounts = await web3.eth.getAccounts();
+    await campaign.methods.finalizeRequest(id).send({ from: accounts[0] });
+  };
+
+  return (
+    <Row
+      disabled={request.complete}
+      positive={readyToFinalize && !request.complete}
+    >
+      <Cell>{id}</Cell>
+      <Cell>{description}</Cell>
+      <Cell>{web3.utils.fromWei(value, "ether")}</Cell>
+      <Cell>{recipient}</Cell>
+      <Cell>
+        {approvalCount} / {approversCount}
+      </Cell>
+      <Cell>
+        {request.complete ? null : (
+          <Button color="green" basic onClick={onApprove}>
+            Approve
+          </Button>
+        )}
+      </Cell>
+      <Cell>
+        {request.complete ? null : (
+          <Button color="teal" basic onClick={onFinalize}>
+            Finalize
+          </Button>
+        )}
+      </Cell>
+    </Row>
+  );
+};
+
+export default RequestRow;
